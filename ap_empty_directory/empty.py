@@ -3,6 +3,23 @@
 import os
 
 from ap_common.filesystem import delete_empty_directories
+from ap_common.utils import replace_env_vars
+
+
+def resolve_path(path: str) -> str:
+    """
+    Resolve a path by expanding environment variables and user home directory.
+
+    Args:
+        path: Path to resolve
+
+    Returns:
+        Resolved absolute path
+    """
+    path = replace_env_vars(path)
+    path = os.path.expanduser(path)
+    path = os.path.abspath(path)
+    return path
 
 
 def delete_files_in_directory(directory: str, recursive: bool = False, dryrun: bool = False, debug: bool = False):
@@ -15,6 +32,8 @@ def delete_files_in_directory(directory: str, recursive: bool = False, dryrun: b
         dryrun: If True, print what would be deleted without actually deleting
         debug: If True, print detailed information about each file
     """
+    directory = resolve_path(directory)
+
     if not os.path.isdir(directory):
         raise ValueError(f"Not a directory: {directory}")
 
