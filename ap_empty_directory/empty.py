@@ -22,6 +22,24 @@ def resolve_path(path: str) -> str:
     return path
 
 
+def _delete_files_in_dir(directory: str, dryrun: bool = False, debug: bool = False):
+    """
+    Delete all files in a single directory (non-recursive).
+
+    Args:
+        directory: Path to the directory
+        dryrun: If True, print what would be deleted without actually deleting
+        debug: If True, print detailed information about each file
+    """
+    for entry in os.listdir(directory):
+        filepath = os.path.join(directory, entry)
+        if os.path.isfile(filepath):
+            if debug or dryrun:
+                print(f"{'[DRYRUN] ' if dryrun else ''}Deleting file: {filepath}")
+            if not dryrun:
+                os.remove(filepath)
+
+
 def delete_files_in_directory(directory: str, recursive: bool = False, dryrun: bool = False, debug: bool = False):
     """
     Delete all files in a directory.
@@ -41,23 +59,10 @@ def delete_files_in_directory(directory: str, recursive: bool = False, dryrun: b
         print(f"delete_files_in_directory({directory}, recursive={recursive}, dryrun={dryrun})")
 
     if recursive:
-        # Walk the directory tree and delete all files
         for root, dirs, files in os.walk(directory):
-            for filename in files:
-                filepath = os.path.join(root, filename)
-                if debug or dryrun:
-                    print(f"{'[DRYRUN] ' if dryrun else ''}Deleting file: {filepath}")
-                if not dryrun:
-                    os.remove(filepath)
+            _delete_files_in_dir(root, dryrun=dryrun, debug=debug)
     else:
-        # Only delete files in the top-level directory
-        for entry in os.listdir(directory):
-            filepath = os.path.join(directory, entry)
-            if os.path.isfile(filepath):
-                if debug or dryrun:
-                    print(f"{'[DRYRUN] ' if dryrun else ''}Deleting file: {filepath}")
-                if not dryrun:
-                    os.remove(filepath)
+        _delete_files_in_dir(directory, dryrun=dryrun, debug=debug)
 
 
 def empty_directory(directory: str, recursive: bool = False, dryrun: bool = False, debug: bool = False):
@@ -70,9 +75,7 @@ def empty_directory(directory: str, recursive: bool = False, dryrun: bool = Fals
         dryrun: If True, print what would be deleted without actually deleting
         debug: If True, print detailed information about operations
     """
-    # First, delete files
     delete_files_in_directory(directory, recursive=recursive, dryrun=dryrun, debug=debug)
 
-    # Then, delete empty directories (uses ap-common functionality)
     if recursive:
         delete_empty_directories(directory, dryrun=dryrun)
