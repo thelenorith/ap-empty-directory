@@ -5,18 +5,23 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ap-empty-directory"
 version = "0.1.0"
-description = "CLI tool to empty directories by removing files and empty subdirectories"
+description = "Remove files from a directory and clean up empty subdirectories"
 readme = "README.md"
-license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Naveen Malik"}
+]
+keywords = ["astrophotography"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "ap-common @ git+https://github.com/jewzaam/ap-common.git",
@@ -35,10 +40,7 @@ ap-empty-directory = "ap_empty_directory.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-
-[tool.black]
-line-length = 120
-target-version = ['py310']
+include = ["ap_empty_directory*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

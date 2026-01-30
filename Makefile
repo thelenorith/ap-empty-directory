@@ -1,28 +1,35 @@
-.PHONY: install install-dev test test-verbose lint format coverage clean
+PYTHON ?= python3
+
+.PHONY: default install install-dev uninstall test test-verbose lint format coverage clean
+
+default: format lint test coverage
 
 install:
-	pip install .
+	$(PYTHON) -m pip install .
 
 install-dev:
-	pip install -e ".[dev]"
+	$(PYTHON) -m pip install -e ".[dev]"
 
-test:
-	pytest
+uninstall:
+	$(PYTHON) -m pip uninstall -y ap-empty-directory || true
 
-test-verbose:
-	pytest -v
+test: install-dev
+	$(PYTHON) -m pytest
 
-lint:
-	flake8 ap_empty_directory tests
-	black --check ap_empty_directory tests
+test-verbose: install-dev
+	$(PYTHON) -m pytest -v
 
-format:
-	black ap_empty_directory tests
+lint: install-dev
+	$(PYTHON) -m flake8 ap_empty_directory tests --max-line-length=88
+	$(PYTHON) -m black --check ap_empty_directory tests
 
-coverage:
-	pytest --cov=ap_empty_directory --cov-report=term-missing --cov-report=html
+format: install-dev
+	$(PYTHON) -m black ap_empty_directory tests
+
+coverage: install-dev
+	$(PYTHON) -m pytest --cov=ap_empty_directory --cov-report=term-missing --cov-report=html
 
 clean:
-	rm -rf build dist *.egg-info .pytest_cache .coverage htmlcov
-	find . -type d -name __pycache__ -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
+	rm -rf build dist *.egg-info .pytest_cache .coverage htmlcov || true
+	find . -type d -name __pycache__ -exec rm -rf {} + || true
+	find . -type f -name "*.pyc" -delete || true

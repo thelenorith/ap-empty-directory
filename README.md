@@ -1,74 +1,55 @@
 # ap-empty-directory
 
-CLI tool to empty directories by removing files and empty subdirectories.
+[![Test](https://github.com/jewzaam/ap-empty-directory/actions/workflows/test.yml/badge.svg)](https://github.com/jewzaam/ap-empty-directory/actions/workflows/test.yml)
+[![Coverage](https://github.com/jewzaam/ap-empty-directory/actions/workflows/coverage.yml/badge.svg)](https://github.com/jewzaam/ap-empty-directory/actions/workflows/coverage.yml)
+[![Lint](https://github.com/jewzaam/ap-empty-directory/actions/workflows/lint.yml/badge.svg)](https://github.com/jewzaam/ap-empty-directory/actions/workflows/lint.yml)
+[![Format](https://github.com/jewzaam/ap-empty-directory/actions/workflows/format.yml/badge.svg)](https://github.com/jewzaam/ap-empty-directory/actions/workflows/format.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+Remove files from a directory and clean up empty subdirectories.
+
+## Overview
+
+A tool for clearing out directories by removing all files and optionally cleaning up empty subdirectories. Useful in astrophotography pipelines for resetting working directories between processing runs.
+
+Key features:
+- Delete files in a directory (non-recursive by default)
+- Optionally recurse into subdirectories with `--recursive`
+- Automatically remove empty directories after file deletion
+- Dry-run mode to preview changes
 
 ## Installation
 
-```bash
-pip install git+https://github.com/jewzaam/ap-empty-directory.git
-```
-
-For development:
-
+Development:
 ```bash
 git clone https://github.com/jewzaam/ap-empty-directory.git
 cd ap-empty-directory
 make install-dev
 ```
 
+From Git:
+```bash
+pip install git+https://github.com/jewzaam/ap-empty-directory.git
+```
+
 ## Usage
 
 ```bash
-# Remove files in a directory (non-recursive)
-ap-empty-directory /path/to/directory
+# Remove files in top-level directory only
+ap-empty-directory /path/to/blink
 
-# Remove files recursively and clean up empty directories
-ap-empty-directory /path/to/directory --recursive
+# Remove all files recursively and clean up empty directories
+ap-empty-directory /path/to/blink --recursive
 
-# Dry run to see what would be deleted
-ap-empty-directory /path/to/directory --recursive --dryrun
-
-# Debug mode for detailed output
-ap-empty-directory /path/to/directory --recursive --debug
+# Preview what would be deleted
+ap-empty-directory /path/to/blink --recursive --dryrun
 ```
 
 ### Options
 
-- `--recursive`, `-r`: Recursively delete files in subdirectories and remove empty directories
-- `--dryrun`, `-n`: Print what would be deleted without actually deleting
-- `--debug`, `-d`: Print detailed information about operations
-
-## Python API
-
-```python
-from ap_empty_directory import empty_directory, delete_files_in_directory
-
-# Empty a directory (delete files and empty subdirs)
-empty_directory("/path/to/directory", recursive=True)
-
-# Just delete files (keep directory structure)
-delete_files_in_directory("/path/to/directory", recursive=True)
-```
-
-## Development
-
-```bash
-# Install dev dependencies
-make install-dev
-
-# Run tests
-make test
-
-# Run linting
-make lint
-
-# Format code
-make format
-
-# Run tests with coverage
-make coverage
-```
-
-## License
-
-Apache-2.0
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--recursive` | `-r` | recursively delete files in subdirectories |
+| `--dryrun` | `-n` | show what would be deleted without deleting |
+| `--debug` | `-d` | enable debug output |
