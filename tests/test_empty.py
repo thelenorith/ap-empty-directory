@@ -73,6 +73,18 @@ class TestDeleteFilesInDirectory:
         with pytest.raises(ValueError, match="Not a directory"):
             delete_files_in_directory("/nonexistent/path")
 
+    def test_delete_files_debug_output(self, tmp_path, capsys):
+        """Test that debug mode produces expected output."""
+        file1 = tmp_path / "file1.txt"
+        file1.touch()
+
+        delete_files_in_directory(str(tmp_path), recursive=False, debug=True)
+
+        captured = capsys.readouterr()
+        assert "delete_files_in_directory" in captured.out
+        assert f"recursive={False}" in captured.out
+        assert f"dryrun={False}" in captured.out
+
 
 class TestEmptyDirectory:
     """Tests for empty_directory function."""
