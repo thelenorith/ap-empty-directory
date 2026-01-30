@@ -40,7 +40,9 @@ def _delete_files_in_dir(directory: str, dryrun: bool = False, debug: bool = Fal
                 os.remove(filepath)
 
 
-def delete_files_in_directory(directory: str, recursive: bool = False, dryrun: bool = False, debug: bool = False):
+def delete_files_in_directory(
+    directory: str, recursive: bool = False, dryrun: bool = False, debug: bool = False
+):
     """
     Delete all files in a directory.
 
@@ -56,7 +58,11 @@ def delete_files_in_directory(directory: str, recursive: bool = False, dryrun: b
         raise ValueError(f"Not a directory: {directory}")
 
     if debug:
-        print(f"delete_files_in_directory({directory}, recursive={recursive}, dryrun={dryrun})")
+        print(
+            f"delete_files_in_directory({directory}, "
+            f"recursive={recursive}, "
+            f"dryrun={dryrun})"
+        )
 
     if recursive:
         for root, dirs, files in os.walk(directory):
@@ -65,7 +71,9 @@ def delete_files_in_directory(directory: str, recursive: bool = False, dryrun: b
         _delete_files_in_dir(directory, dryrun=dryrun, debug=debug)
 
 
-def empty_directory(directory: str, recursive: bool = False, dryrun: bool = False, debug: bool = False):
+def empty_directory(
+    directory: str, recursive: bool = False, dryrun: bool = False, debug: bool = False
+):
     """
     Empty a directory by removing all files and then removing empty subdirectories.
 
@@ -75,7 +83,9 @@ def empty_directory(directory: str, recursive: bool = False, dryrun: bool = Fals
         dryrun: If True, print what would be deleted without actually deleting
         debug: If True, print detailed information about operations
     """
-    delete_files_in_directory(directory, recursive=recursive, dryrun=dryrun, debug=debug)
+    delete_files_in_directory(
+        directory, recursive=recursive, dryrun=dryrun, debug=debug
+    )
 
     if recursive:
         delete_empty_directories(directory, dryrun=dryrun)
