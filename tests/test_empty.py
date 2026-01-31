@@ -1,8 +1,14 @@
 """Tests for the empty module."""
 
+from unittest.mock import patch
+
 import pytest
 
-from ap_empty_directory.empty import delete_files_in_directory, empty_directory
+from ap_empty_directory.empty import (
+    _delete_files_in_dir,
+    delete_files_in_directory,
+    empty_directory,
+)
 
 
 class TestDeleteFilesInDirectory:
@@ -148,3 +154,100 @@ class TestEmptyDirectory:
         # Everything should still exist
         assert file1.exists()
         assert subdir.exists()
+
+
+class TestErrorHandling:
+    """Tests for error handling during file deletion."""
+
+    def test_delete_files_handles_permission_error(self, tmp_path, capsys):
+        """Test that permission errors are caught and reported."""
+        file1 = tmp_path / "file1.txt"
+        file2 = tmp_path / "file2.txt"
+        file1.touch()
+        file2.touch()
+
+        # Mock os.remove to fail on first file, succeed on second
+        original_remove = __builtins__["__import__"]("os").remove
+        call_count = 0
+
+        def mock_remove(path):
+            nonlocal call_count
+            call_count += 1
+            if "file1.txt" in str(path):
+                raise PermissionError("Permission denied")
+            original_remove(path)
+
+        with patch("os.remove", side_effect=mock_remove):
+            failed = _delete_files_in_dir(str(tmp_path))
+
+        # Should report the failure
+        captured = capsys.readouterr()
+        assert "Warning: Failed to delete" in captured.out
+        assert "file1.txt" in captured.out
+        assert len(failed) == 1
+        assert "file1.txt" in failed[0]
+
+    def test_delete_files_continues_after_error(self, tmp_path):
+        """Test that deletion continues after encountering an error."""
+        import os
+
+        file1 = tmp_path / "file1.txt"
+        file2 = tmp_path / "file2.txt"
+        file3 = tmp_path / "file3.txt"
+        file1.touch()
+        file2.touch()
+        file3.touch()
+
+        original_remove = os.remove
+
+        # Mock os.remove to fail only on file2
+        def mock_remove(path):
+            if "file2.txt" in str(path):
+                raise PermissionError("Permission denied")
+            original_remove(path)
+
+        with patch("os.remove", side_effect=mock_remove):
+            failed = delete_files_in_directory(str(tmp_path))
+
+        # file2 should be in failed list
+        assert len(failed) == 1
+        assert "file2.txt" in failed[0]
+
+    def test_delete_files_returns_empty_on_success(self, tmp_path):
+        """Test that an empty list is returned when all deletions succeed."""
+        file1 = tmp_path / "file1.txt"
+        file1.touch()
+
+        failed = delete_files_in_directory(str(tmp_path))
+
+        assert failed == []
+        assert not file1.exists()
+
+    def test_empty_directory_returns_failed_files(self, tmp_path):
+        """Test that empty_directory returns failed files."""
+        file1 = tmp_path / "file1.txt"
+        file1.touch()
+
+        def mock_remove(path):
+            raise PermissionError("Permission denied")
+
+        with patch("os.remove", side_effect=mock_remove):
+            failed = empty_directory(str(tmp_path))
+
+        assert len(failed) == 1
+        assert "file1.txt" in failed[0]
+
+    def test_empty_directory_handles_cleanup_error(self, tmp_path, capsys):
+        """Test that delete_empty_directories errors are caught."""
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+
+        with patch(
+            "ap_empty_directory.empty.delete_empty_directories",
+            side_effect=OSError("Failed to remove directory"),
+        ):
+            failed = empty_directory(str(tmp_path), recursive=True)
+
+        captured = capsys.readouterr()
+        assert "Warning: Failed to clean up empty directories" in captured.out
+        assert failed == []
