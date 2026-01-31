@@ -21,14 +21,14 @@ Key features:
 
 ## Installation
 
-Development:
+### Development
+
 ```bash
-git clone https://github.com/jewzaam/ap-empty-directory.git
-cd ap-empty-directory
 make install-dev
 ```
 
-From Git:
+### From Git
+
 ```bash
 pip install git+https://github.com/jewzaam/ap-empty-directory.git
 ```
