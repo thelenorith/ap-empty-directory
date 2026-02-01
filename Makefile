@@ -26,7 +26,7 @@ format: install-dev
 	$(PYTHON) -m black ap_empty_directory tests
 
 typecheck: install-dev
-	$(PYTHON) -m mypy ap_empty_directory || true
+	$(PYTHON) -m mypy ap_empty_directory
 
 coverage: install-dev
 	$(PYTHON) -m pytest --cov=ap_empty_directory --cov-report=term
