@@ -38,6 +38,13 @@ def main():
         action="store_true",
         help="enable debug output",
     )
+    parser.add_argument(
+        "--exclude-regex",
+        "-e",
+        type=str,
+        default=None,
+        help="regex pattern to exclude files from deletion (matched against filename)",
+    )
 
     args = parser.parse_args()
 
@@ -47,6 +54,7 @@ def main():
             recursive=args.recursive,
             dryrun=args.dryrun,
             debug=args.debug,
+            exclude_regex=args.exclude_regex,
         )
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)

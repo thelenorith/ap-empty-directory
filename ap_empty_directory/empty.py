@@ -1,6 +1,7 @@
 """Core functionality for emptying directories."""
 
 import os
+import re
 
 from ap_common.filesystem import delete_empty_directories
 from ap_common.utils import replace_env_vars
@@ -23,7 +24,10 @@ def resolve_path(path: str) -> str:
 
 
 def _delete_files_in_dir(
-    directory: str, dryrun: bool = False, debug: bool = False
+    directory: str,
+    dryrun: bool = False,
+    debug: bool = False,
+    exclude_pattern: re.Pattern | None = None,
 ) -> list[str]:
     """
     Delete all files in a single directory (non-recursive).
@@ -32,6 +36,7 @@ def _delete_files_in_dir(
         directory: Path to the directory
         dryrun: If True, print what would be deleted without actually deleting
         debug: If True, print detailed information about each file
+        exclude_pattern: Compiled regex pattern to exclude files from deletion
 
     Returns:
         List of files that failed to delete (empty if all succeeded)
@@ -40,6 +45,11 @@ def _delete_files_in_dir(
     for entry in os.listdir(directory):
         filepath = os.path.join(directory, entry)
         if os.path.isfile(filepath):
+            # Check if file matches exclude pattern
+            if exclude_pattern and exclude_pattern.search(entry):
+                if debug:
+                    print(f"Skipping excluded file: {filepath}")
+                continue
             if debug or dryrun:
                 print(f"{'[DRYRUN] ' if dryrun else ''}Deleting file: {filepath}")
             if not dryrun:
@@ -52,7 +62,11 @@ def _delete_files_in_dir(
 
 
 def delete_files_in_directory(
-    directory: str, recursive: bool = False, dryrun: bool = False, debug: bool = False
+    directory: str,
+    recursive: bool = False,
+    dryrun: bool = False,
+    debug: bool = False,
+    exclude_regex: str | None = None,
 ) -> list[str]:
     """
     Delete all files in a directory.
@@ -62,6 +76,7 @@ def delete_files_in_directory(
         recursive: If True, delete files in subdirectories as well
         dryrun: If True, print what would be deleted without actually deleting
         debug: If True, print detailed information about each file
+        exclude_regex: Regex pattern to exclude files from deletion (matched against filename)
 
     Returns:
         List of files that failed to delete (empty if all succeeded)
@@ -71,24 +86,42 @@ def delete_files_in_directory(
     if not os.path.isdir(directory):
         raise ValueError(f"Not a directory: {directory}")
 
+    # Compile the exclude regex pattern if provided
+    exclude_pattern = None
+    if exclude_regex:
+        exclude_pattern = re.compile(exclude_regex)
+
     if debug:
         print(
             f"delete_files_in_directory({directory}, "
             f"recursive={recursive}, "
-            f"dryrun={dryrun})"
+            f"dryrun={dryrun}, "
+            f"exclude_regex={exclude_regex!r})"
         )
 
     failed_files: list[str] = []
     if recursive:
         for root, dirs, files in os.walk(directory):
-            failed_files.extend(_delete_files_in_dir(root, dryrun=dryrun, debug=debug))
+            failed_files.extend(
+                _delete_files_in_dir(
+                    root, dryrun=dryrun, debug=debug, exclude_pattern=exclude_pattern
+                )
+            )
     else:
-        failed_files.extend(_delete_files_in_dir(directory, dryrun=dryrun, debug=debug))
+        failed_files.extend(
+            _delete_files_in_dir(
+                directory, dryrun=dryrun, debug=debug, exclude_pattern=exclude_pattern
+            )
+        )
     return failed_files
 
 
 def empty_directory(
-    directory: str, recursive: bool = False, dryrun: bool = False, debug: bool = False
+    directory: str,
+    recursive: bool = False,
+    dryrun: bool = False,
+    debug: bool = False,
+    exclude_regex: str | None = None,
 ) -> list[str]:
     """
     Empty a directory by removing all files and then removing empty subdirectories.
@@ -98,12 +131,17 @@ def empty_directory(
         recursive: If True, delete files in subdirectories as well
         dryrun: If True, print what would be deleted without actually deleting
         debug: If True, print detailed information about operations
+        exclude_regex: Regex pattern to exclude files from deletion (matched against filename)
 
     Returns:
         List of files that failed to delete (empty if all succeeded)
     """
     failed_files = delete_files_in_directory(
-        directory, recursive=recursive, dryrun=dryrun, debug=debug
+        directory,
+        recursive=recursive,
+        dryrun=dryrun,
+        debug=debug,
+        exclude_regex=exclude_regex,
     )
 
     if recursive:

@@ -156,6 +156,127 @@ class TestEmptyDirectory:
         assert subdir.exists()
 
 
+class TestExcludeRegex:
+    """Tests for exclude_regex functionality."""
+
+    def test_exclude_single_file(self, tmp_path):
+        """Test excluding a specific file from deletion."""
+        file1 = tmp_path / "file1.txt"
+        keep_file = tmp_path / ".keep"
+        file1.touch()
+        keep_file.touch()
+
+        delete_files_in_directory(str(tmp_path), exclude_regex=r"\.keep$")
+
+        assert not file1.exists()
+        assert keep_file.exists()
+
+    def test_exclude_pattern_matches_multiple_files(self, tmp_path):
+        """Test excluding multiple files matching a pattern."""
+        file1 = tmp_path / "data.txt"
+        keep1 = tmp_path / ".keep"
+        keep2 = tmp_path / "dir.keep"
+        file1.touch()
+        keep1.touch()
+        keep2.touch()
+
+        delete_files_in_directory(str(tmp_path), exclude_regex=r"\.keep$")
+
+        assert not file1.exists()
+        assert keep1.exists()
+        assert keep2.exists()
+
+    def test_exclude_recursive(self, tmp_path):
+        """Test exclude pattern works recursively."""
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+
+        file1 = tmp_path / "file1.txt"
+        keep1 = tmp_path / ".keep"
+        file2 = subdir / "file2.txt"
+        keep2 = subdir / ".keep"
+        file1.touch()
+        keep1.touch()
+        file2.touch()
+        keep2.touch()
+
+        delete_files_in_directory(
+            str(tmp_path), recursive=True, exclude_regex=r"\.keep$"
+        )
+
+        assert not file1.exists()
+        assert keep1.exists()
+        assert not file2.exists()
+        assert keep2.exists()
+
+    def test_exclude_with_empty_directory_cleanup(self, tmp_path):
+        """Test that directories with only excluded files are not deleted."""
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+
+        file1 = tmp_path / "file1.txt"
+        keep_file = subdir / ".keep"
+        file1.touch()
+        keep_file.touch()
+
+        empty_directory(str(tmp_path), recursive=True, exclude_regex=r"\.keep$")
+
+        assert not file1.exists()
+        assert subdir.exists()  # Should still exist because .keep is there
+        assert keep_file.exists()
+
+    def test_exclude_debug_output(self, tmp_path, capsys):
+        """Test that debug mode shows skipped files."""
+        keep_file = tmp_path / ".keep"
+        keep_file.touch()
+
+        delete_files_in_directory(str(tmp_path), debug=True, exclude_regex=r"\.keep$")
+
+        captured = capsys.readouterr()
+        assert "Skipping excluded file" in captured.out
+        assert ".keep" in captured.out
+
+    def test_exclude_dryrun(self, tmp_path, capsys):
+        """Test exclude pattern with dryrun mode."""
+        file1 = tmp_path / "file1.txt"
+        keep_file = tmp_path / ".keep"
+        file1.touch()
+        keep_file.touch()
+
+        delete_files_in_directory(str(tmp_path), dryrun=True, exclude_regex=r"\.keep$")
+
+        captured = capsys.readouterr()
+        # file1.txt should be mentioned as would be deleted
+        assert "file1.txt" in captured.out
+        # Both files should still exist
+        assert file1.exists()
+        assert keep_file.exists()
+
+    def test_exclude_regex_case_sensitive(self, tmp_path):
+        """Test that exclude regex is case sensitive by default."""
+        keep_lower = tmp_path / ".keep"
+        keep_upper = tmp_path / ".KEEP"
+        keep_lower.touch()
+        keep_upper.touch()
+
+        delete_files_in_directory(str(tmp_path), exclude_regex=r"\.keep$")
+
+        assert keep_lower.exists()
+        assert not keep_upper.exists()
+
+    def test_no_exclude_regex(self, tmp_path):
+        """Test that all files are deleted when no exclude_regex is provided."""
+        file1 = tmp_path / "file1.txt"
+        keep_file = tmp_path / ".keep"
+        file1.touch()
+        keep_file.touch()
+
+        delete_files_in_directory(str(tmp_path))
+
+        assert not file1.exists()
+        assert not keep_file.exists()
+
+
 class TestErrorHandling:
     """Tests for error handling during file deletion."""
 

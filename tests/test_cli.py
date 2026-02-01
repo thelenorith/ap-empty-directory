@@ -145,6 +145,114 @@ class TestCLIArgumentParsing:
         assert "[DRYRUN]" in captured.out
 
 
+class TestCLIExcludeRegex:
+    """Tests for CLI --exclude-regex option."""
+
+    def test_cli_exclude_regex_long_flag(self, tmp_path, monkeypatch):
+        """Test CLI with --exclude-regex flag."""
+        file1 = tmp_path / "file1.txt"
+        keep_file = tmp_path / ".keep"
+        file1.touch()
+        keep_file.touch()
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["ap-empty-directory", str(tmp_path), "--exclude-regex", r"\.keep$"],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == EXIT_SUCCESS
+        assert not file1.exists()
+        assert keep_file.exists()
+
+    def test_cli_exclude_regex_short_flag(self, tmp_path, monkeypatch):
+        """Test CLI with -e short flag."""
+        file1 = tmp_path / "file1.txt"
+        keep_file = tmp_path / ".keep"
+        file1.touch()
+        keep_file.touch()
+
+        monkeypatch.setattr(
+            sys, "argv", ["ap-empty-directory", str(tmp_path), "-e", r"\.keep$"]
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == EXIT_SUCCESS
+        assert not file1.exists()
+        assert keep_file.exists()
+
+    def test_cli_exclude_regex_with_recursive(self, tmp_path, monkeypatch):
+        """Test CLI with --exclude-regex and --recursive flags."""
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+        file1 = tmp_path / "file1.txt"
+        file2 = subdir / "file2.txt"
+        keep1 = tmp_path / ".keep"
+        keep2 = subdir / ".keep"
+        file1.touch()
+        file2.touch()
+        keep1.touch()
+        keep2.touch()
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "ap-empty-directory",
+                str(tmp_path),
+                "--recursive",
+                "--exclude-regex",
+                r"\.keep$",
+            ],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == EXIT_SUCCESS
+        assert not file1.exists()
+        assert not file2.exists()
+        assert keep1.exists()
+        assert keep2.exists()
+        # Subdirectory should still exist because it has .keep file
+        assert subdir.exists()
+
+    def test_cli_exclude_regex_with_dryrun(self, tmp_path, monkeypatch, capsys):
+        """Test CLI with --exclude-regex and --dryrun flags."""
+        file1 = tmp_path / "file1.txt"
+        keep_file = tmp_path / ".keep"
+        file1.touch()
+        keep_file.touch()
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "ap-empty-directory",
+                str(tmp_path),
+                "--exclude-regex",
+                r"\.keep$",
+                "--dryrun",
+            ],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == EXIT_SUCCESS
+        # Both files should still exist
+        assert file1.exists()
+        assert keep_file.exists()
+        captured = capsys.readouterr()
+        assert "[DRYRUN]" in captured.out
+        assert "file1.txt" in captured.out
+
+
 class TestCLIErrorHandling:
     """Tests for CLI error handling."""
 
