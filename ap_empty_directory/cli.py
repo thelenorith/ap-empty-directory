@@ -39,6 +39,12 @@ def main():
         help="enable debug output",
     )
     parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="suppress progress output",
+    )
+    parser.add_argument(
         "--exclude-regex",
         "-e",
         type=str,
@@ -54,6 +60,7 @@ def main():
             recursive=args.recursive,
             dryrun=args.dryrun,
             debug=args.debug,
+            quiet=args.quiet,
             exclude_regex=args.exclude_regex,
         )
     except ValueError as e:
