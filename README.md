@@ -7,6 +7,14 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+## Documentation
+
+This tool is part of the astrophotography pipeline. For comprehensive documentation, see:
+
+- [Pipeline Overview](https://github.com/jewzaam/ap-base/blob/main/docs/index.md) - Introduction to the pipeline architecture
+- [Workflow Guide](https://github.com/jewzaam/ap-base/blob/main/docs/workflow.md) - Step-by-step processing workflows
+- [Tool API Reference](https://github.com/jewzaam/ap-base/blob/main/docs/tools/ap-empty-directory.md) - Detailed documentation for this tool
+
 Remove files from a directory and clean up empty subdirectories.
 
 ## Overview
