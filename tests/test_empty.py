@@ -1,5 +1,6 @@
 """Tests for the empty module."""
 
+import sys
 from unittest.mock import patch
 
 import pytest
@@ -252,6 +253,9 @@ class TestExcludeRegex:
         assert file1.exists()
         assert keep_file.exists()
 
+    @pytest.mark.skipif(
+        sys.platform == "win32", reason="Windows filesystem is case-insensitive"
+    )
     def test_exclude_regex_case_sensitive(self, tmp_path):
         """Test that exclude regex is case sensitive by default."""
         keep_lower = tmp_path / ".keep"
