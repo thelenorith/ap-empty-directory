@@ -200,8 +200,10 @@ class TestCLIQuietOption:
         assert "[DRYRUN]" not in captured.out
         assert captured.out == ""
 
-    def test_cli_quiet_with_debug(self, tmp_path, monkeypatch, capsys):
-        """Test CLI with --quiet and --debug flags suppresses debug output."""
+    def test_cli_quiet_with_debug(self, tmp_path, monkeypatch, caplog):
+        """Test CLI with --quiet and --debug flags - debug takes precedence."""
+        import logging
+
         test_file = tmp_path / "test.txt"
         test_file.touch()
 
@@ -209,15 +211,14 @@ class TestCLIQuietOption:
             sys, "argv", ["ap-empty-directory", str(tmp_path), "--debug", "--quiet"]
         )
 
-        with pytest.raises(SystemExit) as exc_info:
-            main()
+        with caplog.at_level(logging.DEBUG):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
 
         assert exc_info.value.code == EXIT_SUCCESS
         assert not test_file.exists()
-        captured = capsys.readouterr()
-        # No debug output should be produced when quiet
-        assert "delete_files_in_directory" not in captured.out
-        assert captured.out == ""
+        # Debug takes precedence over quiet - debug output should be present
+        assert "delete_files_in_directory" in caplog.text
 
 
 class TestCLIExcludeRegex:

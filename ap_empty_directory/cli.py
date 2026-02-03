@@ -3,6 +3,7 @@
 import argparse
 import sys
 
+from ap_common.logging_config import setup_logging
 from ap_empty_directory.empty import empty_directory
 
 # Exit codes
@@ -54,13 +55,14 @@ def main():
 
     args = parser.parse_args()
 
+    # Setup logging
+    setup_logging(name="ap_empty_directory", debug=args.debug, quiet=args.quiet)
+
     try:
         empty_directory(
             directory=args.directory,
             recursive=args.recursive,
             dryrun=args.dryrun,
-            debug=args.debug,
-            quiet=args.quiet,
             exclude_regex=args.exclude_regex,
         )
     except ValueError as e:
