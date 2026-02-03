@@ -145,6 +145,81 @@ class TestCLIArgumentParsing:
         assert "[DRYRUN]" in captured.out
 
 
+class TestCLIQuietOption:
+    """Tests for CLI --quiet option."""
+
+    def test_cli_quiet_flag(self, tmp_path, monkeypatch, capsys):
+        """Test CLI with --quiet flag suppresses progress output."""
+        test_file = tmp_path / "test.txt"
+        test_file.touch()
+
+        monkeypatch.setattr(
+            sys, "argv", ["ap-empty-directory", str(tmp_path), "--quiet"]
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == EXIT_SUCCESS
+        assert not test_file.exists()
+        captured = capsys.readouterr()
+        # No output should be produced when quiet
+        assert captured.out == ""
+
+    def test_cli_quiet_short_flag(self, tmp_path, monkeypatch, capsys):
+        """Test CLI with -q short flag."""
+        test_file = tmp_path / "test.txt"
+        test_file.touch()
+
+        monkeypatch.setattr(sys, "argv", ["ap-empty-directory", str(tmp_path), "-q"])
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == EXIT_SUCCESS
+        assert not test_file.exists()
+        captured = capsys.readouterr()
+        assert captured.out == ""
+
+    def test_cli_quiet_with_dryrun(self, tmp_path, monkeypatch, capsys):
+        """Test CLI with --quiet and --dryrun flags suppresses dryrun output."""
+        test_file = tmp_path / "test.txt"
+        test_file.touch()
+
+        monkeypatch.setattr(
+            sys, "argv", ["ap-empty-directory", str(tmp_path), "--dryrun", "--quiet"]
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == EXIT_SUCCESS
+        assert test_file.exists()  # File should still exist (dryrun)
+        captured = capsys.readouterr()
+        # No output should be produced when quiet, even with dryrun
+        assert "[DRYRUN]" not in captured.out
+        assert captured.out == ""
+
+    def test_cli_quiet_with_debug(self, tmp_path, monkeypatch, capsys):
+        """Test CLI with --quiet and --debug flags suppresses debug output."""
+        test_file = tmp_path / "test.txt"
+        test_file.touch()
+
+        monkeypatch.setattr(
+            sys, "argv", ["ap-empty-directory", str(tmp_path), "--debug", "--quiet"]
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == EXIT_SUCCESS
+        assert not test_file.exists()
+        captured = capsys.readouterr()
+        # No debug output should be produced when quiet
+        assert "delete_files_in_directory" not in captured.out
+        assert captured.out == ""
+
+
 class TestCLIExcludeRegex:
     """Tests for CLI --exclude-regex option."""
 
