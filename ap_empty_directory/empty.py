@@ -1,10 +1,13 @@
 """Core functionality for emptying directories."""
 
+import logging
 import os
 import re
 
 from ap_common.filesystem import delete_empty_directories
 from ap_common.utils import replace_env_vars
+
+logger = logging.getLogger(__name__)
 
 
 def resolve_path(path: str) -> str:
@@ -26,8 +29,6 @@ def resolve_path(path: str) -> str:
 def _delete_files_in_dir(
     directory: str,
     dryrun: bool = False,
-    debug: bool = False,
-    quiet: bool = False,
     exclude_pattern: re.Pattern | None = None,
 ) -> list[str]:
     """
@@ -35,9 +36,7 @@ def _delete_files_in_dir(
 
     Args:
         directory: Path to the directory
-        dryrun: If True, print what would be deleted without actually deleting
-        debug: If True, print detailed information about each file
-        quiet: If True, suppress progress output
+        dryrun: If True, log what would be deleted without actually deleting
         exclude_pattern: Compiled regex pattern to exclude files from deletion
 
     Returns:
@@ -49,16 +48,17 @@ def _delete_files_in_dir(
         if os.path.isfile(filepath):
             # Check if file matches exclude pattern
             if exclude_pattern and exclude_pattern.search(entry):
-                if debug and not quiet:
-                    print(f"Skipping excluded file: {filepath}")
+                logger.debug(f"Skipping excluded file: {filepath}")
                 continue
-            if (debug or dryrun) and not quiet:
-                print(f"{'[DRYRUN] ' if dryrun else ''}Deleting file: {filepath}")
+            if dryrun:
+                logger.info(f"[DRYRUN] Deleting file: {filepath}")
+            else:
+                logger.debug(f"Deleting file: {filepath}")
             if not dryrun:
                 try:
                     os.remove(filepath)
                 except OSError as e:
-                    print(f"Warning: Failed to delete {filepath}: {e}")
+                    logger.warning(f"Failed to delete {filepath}: {e}")
                     failed_files.append(filepath)
     return failed_files
 
@@ -67,8 +67,6 @@ def delete_files_in_directory(
     directory: str,
     recursive: bool = False,
     dryrun: bool = False,
-    debug: bool = False,
-    quiet: bool = False,
     exclude_regex: str | None = None,
 ) -> list[str]:
     """
@@ -77,9 +75,7 @@ def delete_files_in_directory(
     Args:
         directory: Path to the directory to empty
         recursive: If True, delete files in subdirectories as well
-        dryrun: If True, print what would be deleted without actually deleting
-        debug: If True, print detailed information about each file
-        quiet: If True, suppress progress output
+        dryrun: If True, log what would be deleted without actually deleting
         exclude_regex: Regex pattern to exclude files from deletion (matched against filename)
 
     Returns:
@@ -95,13 +91,12 @@ def delete_files_in_directory(
     if exclude_regex:
         exclude_pattern = re.compile(exclude_regex)
 
-    if debug and not quiet:
-        print(
-            f"delete_files_in_directory({directory}, "
-            f"recursive={recursive}, "
-            f"dryrun={dryrun}, "
-            f"exclude_regex={exclude_regex!r})"
-        )
+    logger.debug(
+        f"delete_files_in_directory({directory}, "
+        f"recursive={recursive}, "
+        f"dryrun={dryrun}, "
+        f"exclude_regex={exclude_regex!r})"
+    )
 
     failed_files: list[str] = []
     if recursive:
@@ -110,8 +105,6 @@ def delete_files_in_directory(
                 _delete_files_in_dir(
                     root,
                     dryrun=dryrun,
-                    debug=debug,
-                    quiet=quiet,
                     exclude_pattern=exclude_pattern,
                 )
             )
@@ -120,8 +113,6 @@ def delete_files_in_directory(
             _delete_files_in_dir(
                 directory,
                 dryrun=dryrun,
-                debug=debug,
-                quiet=quiet,
                 exclude_pattern=exclude_pattern,
             )
         )
@@ -132,8 +123,6 @@ def empty_directory(
     directory: str,
     recursive: bool = False,
     dryrun: bool = False,
-    debug: bool = False,
-    quiet: bool = False,
     exclude_regex: str | None = None,
 ) -> list[str]:
     """
@@ -142,9 +131,7 @@ def empty_directory(
     Args:
         directory: Path to the directory to empty
         recursive: If True, delete files in subdirectories as well
-        dryrun: If True, print what would be deleted without actually deleting
-        debug: If True, print detailed information about operations
-        quiet: If True, suppress progress output
+        dryrun: If True, log what would be deleted without actually deleting
         exclude_regex: Regex pattern to exclude files from deletion (matched against filename)
 
     Returns:
@@ -154,8 +141,6 @@ def empty_directory(
         directory,
         recursive=recursive,
         dryrun=dryrun,
-        debug=debug,
-        quiet=quiet,
         exclude_regex=exclude_regex,
     )
 
@@ -163,6 +148,6 @@ def empty_directory(
         try:
             delete_empty_directories(directory, dryrun=dryrun)
         except OSError as e:
-            print(f"Warning: Failed to clean up empty directories: {e}")
+            logger.warning(f"Failed to clean up empty directories: {e}")
 
     return failed_files

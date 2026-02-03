@@ -80,17 +80,19 @@ class TestDeleteFilesInDirectory:
         with pytest.raises(ValueError, match="Not a directory"):
             delete_files_in_directory("/nonexistent/path")
 
-    def test_delete_files_debug_output(self, tmp_path, capsys):
+    def test_delete_files_debug_output(self, tmp_path, caplog):
         """Test that debug mode produces expected output."""
+        import logging
+
         file1 = tmp_path / "file1.txt"
         file1.touch()
 
-        delete_files_in_directory(str(tmp_path), recursive=False, debug=True)
+        with caplog.at_level(logging.DEBUG, logger="ap_empty_directory.empty"):
+            delete_files_in_directory(str(tmp_path), recursive=False)
 
-        captured = capsys.readouterr()
-        assert "delete_files_in_directory" in captured.out
-        assert f"recursive={False}" in captured.out
-        assert f"dryrun={False}" in captured.out
+        assert "delete_files_in_directory" in caplog.text
+        assert f"recursive={False}" in caplog.text
+        assert f"dryrun={False}" in caplog.text
 
 
 class TestEmptyDirectory:
@@ -226,29 +228,35 @@ class TestExcludeRegex:
         assert subdir.exists()  # Should still exist because .keep is there
         assert keep_file.exists()
 
-    def test_exclude_debug_output(self, tmp_path, capsys):
+    def test_exclude_debug_output(self, tmp_path, caplog):
         """Test that debug mode shows skipped files."""
+        import logging
+
         keep_file = tmp_path / ".keep"
         keep_file.touch()
 
-        delete_files_in_directory(str(tmp_path), debug=True, exclude_regex=r"\.keep$")
+        with caplog.at_level(logging.DEBUG, logger="ap_empty_directory.empty"):
+            delete_files_in_directory(str(tmp_path), exclude_regex=r"\.keep$")
 
-        captured = capsys.readouterr()
-        assert "Skipping excluded file" in captured.out
-        assert ".keep" in captured.out
+        assert "Skipping excluded file" in caplog.text
+        assert ".keep" in caplog.text
 
-    def test_exclude_dryrun(self, tmp_path, capsys):
+    def test_exclude_dryrun(self, tmp_path, caplog):
         """Test exclude pattern with dryrun mode."""
+        import logging
+
         file1 = tmp_path / "file1.txt"
         keep_file = tmp_path / ".keep"
         file1.touch()
         keep_file.touch()
 
-        delete_files_in_directory(str(tmp_path), dryrun=True, exclude_regex=r"\.keep$")
+        with caplog.at_level(logging.INFO):
+            delete_files_in_directory(
+                str(tmp_path), dryrun=True, exclude_regex=r"\.keep$"
+            )
 
-        captured = capsys.readouterr()
         # file1.txt should be mentioned as would be deleted
-        assert "file1.txt" in captured.out
+        assert "file1.txt" in caplog.text
         # Both files should still exist
         assert file1.exists()
         assert keep_file.exists()
@@ -284,8 +292,10 @@ class TestExcludeRegex:
 class TestErrorHandling:
     """Tests for error handling during file deletion."""
 
-    def test_delete_files_handles_permission_error(self, tmp_path, capsys):
+    def test_delete_files_handles_permission_error(self, tmp_path, caplog):
         """Test that permission errors are caught and reported."""
+        import logging
+
         file1 = tmp_path / "file1.txt"
         file2 = tmp_path / "file2.txt"
         file1.touch()
@@ -302,13 +312,13 @@ class TestErrorHandling:
                 raise PermissionError("Permission denied")
             original_remove(path)
 
-        with patch("os.remove", side_effect=mock_remove):
-            failed = _delete_files_in_dir(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            with patch("os.remove", side_effect=mock_remove):
+                failed = _delete_files_in_dir(str(tmp_path))
 
         # Should report the failure
-        captured = capsys.readouterr()
-        assert "Warning: Failed to delete" in captured.out
-        assert "file1.txt" in captured.out
+        assert "Failed to delete" in caplog.text
+        assert "file1.txt" in caplog.text
         assert len(failed) == 1
         assert "file1.txt" in failed[0]
 
@@ -362,17 +372,19 @@ class TestErrorHandling:
         assert len(failed) == 1
         assert "file1.txt" in failed[0]
 
-    def test_empty_directory_handles_cleanup_error(self, tmp_path, capsys):
+    def test_empty_directory_handles_cleanup_error(self, tmp_path, caplog):
         """Test that delete_empty_directories errors are caught."""
+        import logging
+
         subdir = tmp_path / "subdir"
         subdir.mkdir()
 
-        with patch(
-            "ap_empty_directory.empty.delete_empty_directories",
-            side_effect=OSError("Failed to remove directory"),
-        ):
-            failed = empty_directory(str(tmp_path), recursive=True)
+        with caplog.at_level(logging.WARNING):
+            with patch(
+                "ap_empty_directory.empty.delete_empty_directories",
+                side_effect=OSError("Failed to remove directory"),
+            ):
+                failed = empty_directory(str(tmp_path), recursive=True)
 
-        captured = capsys.readouterr()
-        assert "Warning: Failed to clean up empty directories" in captured.out
+        assert "Failed to clean up empty directories" in caplog.text
         assert failed == []
