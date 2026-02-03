@@ -61,3 +61,4 @@ ap-empty-directory /path/to/blink --recursive --dryrun
 | `--recursive` | `-r` | recursively delete files in subdirectories |
 | `--dryrun` | `-n` | show what would be deleted without deleting |
 | `--debug` | `-d` | enable debug output |
+| `--quiet` | `-q` | suppress progress output |
