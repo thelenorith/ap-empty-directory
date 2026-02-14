@@ -74,7 +74,7 @@ class TestCLIArgumentParsing:
         assert exc_info.value.code == EXIT_SUCCESS
         assert test_file.exists()  # File should still exist
         captured = capsys.readouterr()
-        assert "[DRYRUN]" in captured.out
+        assert "[DRYRUN]" in captured.err
 
     def test_cli_dryrun_short_flag(self, tmp_path, monkeypatch):
         """Test CLI with -n short flag."""
@@ -103,7 +103,7 @@ class TestCLIArgumentParsing:
 
         assert exc_info.value.code == EXIT_SUCCESS
         captured = capsys.readouterr()
-        assert "delete_files_in_directory" in captured.out
+        assert "delete_files_in_directory" in captured.err
 
     def test_cli_debug_short_flag(self, tmp_path, monkeypatch, capsys):
         """Test CLI with -d short flag."""
@@ -117,7 +117,7 @@ class TestCLIArgumentParsing:
 
         assert exc_info.value.code == EXIT_SUCCESS
         captured = capsys.readouterr()
-        assert "delete_files_in_directory" in captured.out
+        assert "delete_files_in_directory" in captured.err
 
     def test_cli_combined_flags(self, tmp_path, monkeypatch, capsys):
         """Test CLI with multiple flags combined."""
@@ -141,8 +141,8 @@ class TestCLIArgumentParsing:
         assert file2.exists()
         # Should have debug output
         captured = capsys.readouterr()
-        assert "delete_files_in_directory" in captured.out
-        assert "[DRYRUN]" in captured.out
+        assert "delete_files_in_directory" in captured.err
+        assert "[DRYRUN]" in captured.err
 
 
 class TestCLIQuietOption:
@@ -325,8 +325,8 @@ class TestCLIExcludeRegex:
         assert file1.exists()
         assert keep_file.exists()
         captured = capsys.readouterr()
-        assert "[DRYRUN]" in captured.out
-        assert "file1.txt" in captured.out
+        assert "[DRYRUN]" in captured.err
+        assert "file1.txt" in captured.err
 
 
 class TestCLIErrorHandling:
