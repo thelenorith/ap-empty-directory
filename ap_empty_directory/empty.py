@@ -76,7 +76,8 @@ def delete_files_in_directory(
         directory: Path to the directory to empty
         recursive: If True, delete files in subdirectories as well
         dryrun: If True, log what would be deleted without actually deleting
-        exclude_regex: Regex pattern to exclude files from deletion (matched against filename)
+        exclude_regex: Regex pattern to exclude files from deletion
+            (matched against filename)
 
     Returns:
         List of files that failed to delete (empty if all succeeded)
@@ -132,7 +133,8 @@ def empty_directory(
         directory: Path to the directory to empty
         recursive: If True, delete files in subdirectories as well
         dryrun: If True, log what would be deleted without actually deleting
-        exclude_regex: Regex pattern to exclude files from deletion (matched against filename)
+        exclude_regex: Regex pattern to exclude files from deletion
+            (matched against filename)
 
     Returns:
         List of files that failed to delete (empty if all succeeded)
