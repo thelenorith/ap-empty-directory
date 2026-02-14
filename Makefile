@@ -23,7 +23,7 @@ test-verbose: install-dev
 	$(PYTHON) -m pytest -v
 
 lint: install-dev
-	$(PYTHON) -m flake8 --max-line-length=88 --extend-ignore=E203,W503,E501,F401 ap_empty_directory tests
+	$(PYTHON) -m flake8 --max-line-length=88 --extend-ignore=E203,W503 ap_empty_directory tests
 
 format: install-dev
 	$(PYTHON) -m black ap_empty_directory tests
