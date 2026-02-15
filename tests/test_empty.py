@@ -1,6 +1,5 @@
 """Tests for the empty module."""
 
-import sys
 from unittest.mock import patch
 
 import pytest
@@ -261,20 +260,30 @@ class TestExcludeRegex:
         assert file1.exists()
         assert keep_file.exists()
 
-    @pytest.mark.skipif(
-        sys.platform == "win32", reason="Windows filesystem is case-insensitive"
-    )
     def test_exclude_regex_case_sensitive(self, tmp_path):
         """Test that exclude regex is case sensitive by default."""
-        keep_lower = tmp_path / ".keep"
-        keep_upper = tmp_path / ".KEEP"
-        keep_lower.touch()
-        keep_upper.touch()
+        import os
 
-        delete_files_in_directory(str(tmp_path), exclude_regex=r"\.keep$")
+        # Mock os.listdir to return both case variants
+        # This tests regex matching without requiring filesystem case-sensitivity
+        with patch("os.listdir", return_value=[".keep", ".KEEP"]):
+            # Track which files would be deleted
+            deleted_files = []
 
-        assert keep_lower.exists()
-        assert not keep_upper.exists()
+            def mock_isfile(path):
+                # Treat both as files
+                return path.endswith(".keep") or path.endswith(".KEEP")
+
+            def mock_remove(path):
+                deleted_files.append(os.path.basename(path))
+
+            with patch("os.path.isfile", side_effect=mock_isfile):
+                with patch("os.remove", side_effect=mock_remove):
+                    delete_files_in_directory(str(tmp_path), exclude_regex=r"\.keep$")
+
+        # Only .KEEP should be deleted (case-sensitive regex)
+        assert ".KEEP" in deleted_files
+        assert ".keep" not in deleted_files
 
     def test_no_exclude_regex(self, tmp_path):
         """Test that all files are deleted when no exclude_regex is provided."""
