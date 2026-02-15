@@ -48,6 +48,9 @@ ap-empty-directory /path/to/blink --recursive
 
 # Preview what would be deleted
 ap-empty-directory /path/to/blink --recursive --dryrun
+
+# Remove all files except those matching a pattern
+ap-empty-directory /path/to/blink --recursive --exclude-regex '\.keep$'
 ```
 
 ### Options
@@ -58,3 +61,4 @@ ap-empty-directory /path/to/blink --recursive --dryrun
 | `--dryrun` | `-n` | show what would be deleted without deleting |
 | `--debug` | `-d` | enable debug output |
 | `--quiet` | `-q` | suppress progress output |
+| `--exclude-regex` | `-e` | regex pattern to exclude files from deletion (matched against filename) |
